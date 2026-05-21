@@ -1,0 +1,6 @@
+{
+  "name": "@komatik/api-client",
+  "version": "0.0.0",
+  "private": true,
+  "main": "src/index.js"
+}

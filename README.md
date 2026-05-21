@@ -1,22 +1,28 @@
-This is a [Next.js](https://nextjs.org) project bootstrapped with [`create-next-app`](https://nextjs.org/docs/app/api-reference/cli/create-next-app).
+This repo is a monorepo with a Next.js frontend and a backend scaffold.
 
 ## Getting Started
 
-First, run the development server:
+Install dependencies at the repo root:
 
 ```bash
-npm run dev
-# or
-yarn dev
-# or
-pnpm dev
-# or
-bun dev
+npm install
+```
+
+Run the frontend dev server:
+
+```bash
+npm run dev:frontend
+```
+
+Run the backend dev server:
+
+```bash
+npm run dev:backend
 ```
 
 Open [http://localhost:3000](http://localhost:3000) with your browser to see the result.
 
-You can start editing the page by modifying `app/page.js`. The page auto-updates as you edit the file.
+You can start editing the page by modifying `apps/frontend/app/page.js`. The page auto-updates as you edit the file.
 
 ## Learn More
 
