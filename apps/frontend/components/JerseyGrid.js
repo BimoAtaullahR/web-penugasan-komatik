@@ -7,17 +7,13 @@ import SortDropdown from './SortDropdown';
 import FilterSidebar from './FilterSidebar';
 import { useQuery } from '@tanstack/react-query';
 import { getJerseys } from '@komatik/api-client';
+import useDebounce from '../hooks/useDebounce';
 
 export default function JerseyGrid() {
   const searchParams = useSearchParams();
   const limit = 24;
   const offset = 0;
-  const { data, isLoading, isError, error } = useQuery({
-    queryKey: ['jerseys', { limit, offset }],
-    queryFn: () => getJerseys({ limit, offset })
-  });
-  const jerseyData = useMemo(() => data?.data ?? [], [data]);
-  
+
   const [searchQuery, setSearchQuery] = useState('');
   const [sortBy, setSortBy] = useState('featured');
   
@@ -36,32 +32,45 @@ export default function JerseyGrid() {
     };
   });
 
-  // Derived state (Virtual DOM re-rendering optimization demonstration)
-  // useMemo memastikan array hanya dihitung ulang jika dependency berubah.
+  // Debounce search query to reduce API calls while typing
+  const debouncedSearch = useDebounce(searchQuery, 300);
+
+  // Build query params for the API — server-side filtering
+  const queryParams = useMemo(() => {
+    const params = { limit, offset };
+    if (debouncedSearch.trim()) params.search = debouncedSearch.trim();
+    if (filters.league.length === 1) params.league = filters.league[0];
+    if (filters.kitType.length === 1) params.kitType = filters.kitType[0];
+    if (filters.issueType.length === 1) params.issueType = filters.issueType[0];
+    if (filters.brand.length === 1) params.brand = filters.brand[0];
+    return params;
+  }, [debouncedSearch, filters, limit, offset]);
+
+  const { data, isLoading, isError, error } = useQuery({
+    queryKey: ['jerseys', queryParams],
+    queryFn: () => getJerseys(queryParams)
+  });
+  const jerseyData = useMemo(() => data?.data ?? [], [data]);
+
+  // Client-side multi-filter + sorting for cases where the API only supports single-value filters
   const filteredJerseys = useMemo(() => {
     let result = [...jerseyData];
 
-    // 1. Search Filter (Text Input)
-    if (searchQuery.trim() !== '') {
-      result = result.filter(j => 
-        j.clubName.toLowerCase().includes(searchQuery.toLowerCase()) ||
-        j.country.toLowerCase().includes(searchQuery.toLowerCase())
-      );
-    }
+    // Multi-value filters: apply client-side if more than one value selected
+    // (API supports only single value per filter param)
+    if (filters.league.length > 1) result = result.filter(j => filters.league.includes(j.league));
+    if (filters.kitType.length > 1) result = result.filter(j => filters.kitType.includes(j.kitType));
+    if (filters.issueType.length > 1) result = result.filter(j => filters.issueType.includes(j.issueType));
+    if (filters.brand.length > 1) result = result.filter(j => filters.brand.includes(j.brand));
 
-    // 2. Sidebar Filters (Checkboxes)
-    if (filters.league.length > 0) result = result.filter(j => filters.league.includes(j.league));
-    if (filters.kitType.length > 0) result = result.filter(j => filters.kitType.includes(j.kitType));
-    if (filters.issueType.length > 0) result = result.filter(j => filters.issueType.includes(j.issueType));
-    if (filters.brand.length > 0) result = result.filter(j => filters.brand.includes(j.brand));
-
-    // 3. Sorting
+    // Sorting
     if (sortBy === 'price-low') result.sort((a, b) => a.price - b.price);
     if (sortBy === 'price-high') result.sort((a, b) => b.price - a.price);
     
     return result;
-  }, [jerseyData, searchQuery, filters, sortBy]);
+  }, [jerseyData, filters, sortBy]);
 
+  // Memoize unique filter options from server data
   const filterOptions = useMemo(() => ({
     leagues: [...new Set(jerseyData.map(j => j.league))],
     kitTypes: [...new Set(jerseyData.map(j => j.kitType))],
@@ -69,9 +78,28 @@ export default function JerseyGrid() {
     brands: [...new Set(jerseyData.map(j => j.brand))]
   }), [jerseyData]);
 
+  // For filter options, we need a separate unfiltered query to populate sidebar
+  const { data: allData } = useQuery({
+    queryKey: ['jerseys', { limit: 100, offset: 0 }],
+    queryFn: () => getJerseys({ limit: 100, offset: 0 }),
+    staleTime: 60000 // cache for 60s
+  });
+
+  const allFilterOptions = useMemo(() => {
+    const all = allData?.data ?? [];
+    return {
+      leagues: [...new Set(all.map(j => j.league))],
+      kitTypes: [...new Set(all.map(j => j.kitType))],
+      issueTypes: [...new Set(all.map(j => j.issueType))],
+      brands: [...new Set(all.map(j => j.brand))]
+    };
+  }, [allData]);
+
+  const activeOptions = allData ? allFilterOptions : filterOptions;
+
   return (
     <div className="flex gap-8" style={{ alignItems: 'flex-start', flexWrap: 'wrap' }}>
-      <FilterSidebar filters={filters} setFilters={setFilters} options={filterOptions} />
+      <FilterSidebar filters={filters} setFilters={setFilters} options={activeOptions} />
       
       <div className="flex-1 flex flex-col gap-6" style={{ minWidth: '300px' }}>
         <div className="flex items-center justify-between gap-4" style={{ flexWrap: 'wrap' }}>
