@@ -13,6 +13,10 @@
     "build": "npm run build -w apps/frontend",
     "start": "npm run start -w apps/frontend",
     "lint": "npm run lint -w apps/frontend",
-    "test": "node --test"
+    "test": "node --test --import tsx"
+  },
+  "devDependencies": {
+    "tsx": "^4.20.0",
+    "typescript": "^5.9.2"
   }
 }

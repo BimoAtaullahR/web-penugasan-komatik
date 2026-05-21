@@ -1,0 +1,26 @@
+generator client {
+  provider = "prisma-client-js"
+}
+
+datasource db {
+  provider = "postgresql"
+  url      = env("DATABASE_URL")
+}
+
+model Jersey {
+  id          Int     @id @default(autoincrement())
+  clubName    String
+  league      String
+  country     String
+  season      String
+  kitType     String
+  issueType   String
+  brand       String
+  gender      String
+  price       Int
+  description String
+  image       String
+  rating      Float
+  isNew       Boolean
+  stock       Int
+}

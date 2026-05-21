@@ -1,7 +1,30 @@
 "use client";
-import { getAllLeagues, getAllKitTypes, getAllIssueTypes, getAllBrands } from "../data/jerseys";
 
-export default function FilterSidebar({ filters, setFilters }) {
+const FilterSection = ({ title, options, category, filters, onToggle }) => (
+  <div style={{ marginBottom: '1.5rem' }}>
+    <h4 className="heading-3" style={{ fontSize: '1rem', marginBottom: '0.75rem', borderBottom: '1px solid var(--border)', paddingBottom: '0.5rem' }}>{title}</h4>
+    <div className="flex flex-col gap-3">
+      {options.map(opt => (
+        <label key={opt} style={{ display: 'flex', alignItems: 'center', gap: '0.75rem', cursor: 'pointer', fontSize: '0.875rem', color: 'var(--text-muted)' }} className="hover:text-main">
+          <input 
+            type="checkbox" 
+            checked={(filters[category] || []).includes(opt)}
+            onChange={() => onToggle(category, opt)}
+            style={{ 
+              accentColor: 'var(--primary)', 
+              width: '1.125rem', 
+              height: '1.125rem',
+              cursor: 'pointer'
+            }}
+          />
+          {opt}
+        </label>
+      ))}
+    </div>
+  </div>
+);
+
+export default function FilterSidebar({ filters, setFilters, options }) {
   const toggleFilter = (category, value) => {
     setFilters(prev => {
       const current = prev[category] || [];
@@ -12,29 +35,7 @@ export default function FilterSidebar({ filters, setFilters }) {
     });
   };
 
-  const FilterSection = ({ title, options, category }) => (
-    <div style={{ marginBottom: '1.5rem' }}>
-      <h4 className="heading-3" style={{ fontSize: '1rem', marginBottom: '0.75rem', borderBottom: '1px solid var(--border)', paddingBottom: '0.5rem' }}>{title}</h4>
-      <div className="flex flex-col gap-3">
-        {options.map(opt => (
-          <label key={opt} style={{ display: 'flex', alignItems: 'center', gap: '0.75rem', cursor: 'pointer', fontSize: '0.875rem', color: 'var(--text-muted)' }} className="hover:text-main">
-            <input 
-              type="checkbox" 
-              checked={(filters[category] || []).includes(opt)}
-              onChange={() => toggleFilter(category, opt)}
-              style={{ 
-                accentColor: 'var(--primary)', 
-                width: '1.125rem', 
-                height: '1.125rem',
-                cursor: 'pointer'
-              }}
-            />
-            {opt}
-          </label>
-        ))}
-      </div>
-    </div>
-  );
+  const { leagues, kitTypes, issueTypes, brands } = options;
 
   return (
     <aside style={{ width: '250px', flexShrink: 0, borderRadius: 'var(--radius-md)' }} className="glass-panel">
@@ -49,10 +50,10 @@ export default function FilterSidebar({ filters, setFilters }) {
           </button>
         </div>
         
-        <FilterSection title="Liga" options={getAllLeagues()} category="league" />
-        <FilterSection title="Tipe Kit" options={getAllKitTypes()} category="kitType" />
-        <FilterSection title="Tipe Isu" options={getAllIssueTypes()} category="issueType" />
-        <FilterSection title="Apparel" options={getAllBrands()} category="brand" />
+        <FilterSection title="Liga" options={leagues} category="league" filters={filters} onToggle={toggleFilter} />
+        <FilterSection title="Tipe Kit" options={kitTypes} category="kitType" filters={filters} onToggle={toggleFilter} />
+        <FilterSection title="Tipe Isu" options={issueTypes} category="issueType" filters={filters} onToggle={toggleFilter} />
+        <FilterSection title="Apparel" options={brands} category="brand" filters={filters} onToggle={toggleFilter} />
       </div>
     </aside>
   );

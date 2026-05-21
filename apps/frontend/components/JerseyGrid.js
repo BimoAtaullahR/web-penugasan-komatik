@@ -1,13 +1,22 @@
 "use client";
-import { useState, useMemo } from 'react';
+import { useMemo, useState } from 'react';
 import { useSearchParams } from 'next/navigation';
 import JerseyCard from './JerseyCard';
 import SearchBar from './SearchBar';
 import SortDropdown from './SortDropdown';
 import FilterSidebar from './FilterSidebar';
+import { useQuery } from '@tanstack/react-query';
+import { getJerseys } from '@komatik/api-client';
 
-export default function JerseyGrid({ initialJerseys }) {
+export default function JerseyGrid() {
   const searchParams = useSearchParams();
+  const limit = 24;
+  const offset = 0;
+  const { data, isLoading, isError, error } = useQuery({
+    queryKey: ['jerseys', { limit, offset }],
+    queryFn: () => getJerseys({ limit, offset })
+  });
+  const jerseyData = useMemo(() => data?.data ?? [], [data]);
   
   const [searchQuery, setSearchQuery] = useState('');
   const [sortBy, setSortBy] = useState('featured');
@@ -30,7 +39,7 @@ export default function JerseyGrid({ initialJerseys }) {
   // Derived state (Virtual DOM re-rendering optimization demonstration)
   // useMemo memastikan array hanya dihitung ulang jika dependency berubah.
   const filteredJerseys = useMemo(() => {
-    let result = [...initialJerseys];
+    let result = [...jerseyData];
 
     // 1. Search Filter (Text Input)
     if (searchQuery.trim() !== '') {
@@ -51,11 +60,18 @@ export default function JerseyGrid({ initialJerseys }) {
     if (sortBy === 'price-high') result.sort((a, b) => b.price - a.price);
     
     return result;
-  }, [initialJerseys, searchQuery, filters, sortBy]);
+  }, [jerseyData, searchQuery, filters, sortBy]);
+
+  const filterOptions = useMemo(() => ({
+    leagues: [...new Set(jerseyData.map(j => j.league))],
+    kitTypes: [...new Set(jerseyData.map(j => j.kitType))],
+    issueTypes: [...new Set(jerseyData.map(j => j.issueType))],
+    brands: [...new Set(jerseyData.map(j => j.brand))]
+  }), [jerseyData]);
 
   return (
     <div className="flex gap-8" style={{ alignItems: 'flex-start', flexWrap: 'wrap' }}>
-      <FilterSidebar filters={filters} setFilters={setFilters} />
+      <FilterSidebar filters={filters} setFilters={setFilters} options={filterOptions} />
       
       <div className="flex-1 flex flex-col gap-6" style={{ minWidth: '300px' }}>
         <div className="flex items-center justify-between gap-4" style={{ flexWrap: 'wrap' }}>
@@ -68,7 +84,17 @@ export default function JerseyGrid({ initialJerseys }) {
           </div>
         </div>
 
-        {filteredJerseys.length === 0 ? (
+        {isLoading ? (
+          <div className="glass-panel flex flex-col items-center justify-center text-center" style={{ padding: '4rem', borderRadius: 'var(--radius-md)' }}>
+            <div style={{ fontSize: '2rem', marginBottom: '1rem' }}>⏳</div>
+            <p className="text-muted">Memuat katalog jersey...</p>
+          </div>
+        ) : isError ? (
+          <div className="glass-panel flex flex-col items-center justify-center text-center" style={{ padding: '4rem', borderRadius: 'var(--radius-md)' }}>
+            <div style={{ fontSize: '2rem', marginBottom: '1rem' }}>⚠️</div>
+            <p className="text-muted">Gagal memuat katalog: {error?.message || 'Terjadi kesalahan'}</p>
+          </div>
+        ) : filteredJerseys.length === 0 ? (
           <div className="glass-panel flex flex-col items-center justify-center text-center" style={{ padding: '4rem', borderRadius: 'var(--radius-md)' }}>
             <div style={{ fontSize: '3rem', marginBottom: '1rem' }}>🕵️</div>
             <h3 className="heading-3" style={{ marginBottom: '0.5rem' }}>Jersey tidak ditemukan</h3>

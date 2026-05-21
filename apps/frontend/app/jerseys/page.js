@@ -1,4 +1,3 @@
-import { jerseys } from "../../data/jerseys";
 import JerseyGrid from "../../components/JerseyGrid";
 import { Suspense } from "react";
 
@@ -23,7 +22,7 @@ export default function JerseysPage() {
         Ini adalah demonstrasi Hybrid SSR + CSR di Next.js App Router.
       */}
       <Suspense fallback={<div style={{ textAlign: 'center', padding: '4rem', color: 'var(--text-muted)' }}>Memuat katalog...</div>}>
-        <JerseyGrid initialJerseys={jerseys} />
+        <JerseyGrid />
       </Suspense>
     </div>
   );
