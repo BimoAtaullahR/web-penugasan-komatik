@@ -24,3 +24,9 @@ model Jersey {
   isNew       Boolean
   stock       Int
 }
+
+model Admin {
+  id       Int    @id @default(autoincrement())
+  username String @unique
+  password String
+}

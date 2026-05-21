@@ -1,6 +1,12 @@
-import { seedJerseys } from "../src/seed";
+import { seedJerseys, seedAdmin } from "../src/seed";
 
-seedJerseys()
+async function main() {
+  await seedJerseys();
+  await seedAdmin();
+  console.log("Seeded jerseys and admin user");
+}
+
+main()
   .then(() => {
     process.exit(0);
   })
