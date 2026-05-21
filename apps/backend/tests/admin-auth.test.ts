@@ -236,3 +236,31 @@ test("POST /api/v1/jerseys with missing required fields returns 400", async () =
   assert.ok(response.body.errors, "Should include validation errors");
   assert.ok(response.body.errors.length > 0, "Should have at least one validation error");
 });
+
+test("POST /api/v1/jerseys with negative stock returns 400 (Stock rules)", async () => {
+  const cookie = await loginAdmin();
+
+  const response = await request(app)
+    .post("/api/v1/jerseys")
+    .set("Cookie", cookie)
+    .send({
+      clubName: "Negative FC",
+      league: "Test League",
+      country: "Testland",
+      season: "2025/2026",
+      kitType: "Home",
+      issueType: "Fan Issue",
+      brand: "TestBrand",
+      gender: "Men",
+      price: 500000,
+      description: "A test jersey",
+      image: "/images/test.png",
+      rating: 4.0,
+      isNew: true,
+      stock: -5, // Negative stock should fail
+    });
+
+  assert.equal(response.status, 400);
+  assert.equal(response.body.success, false);
+  assert.ok(response.body.errors.some((e: any) => e.path === "stock"));
+});
