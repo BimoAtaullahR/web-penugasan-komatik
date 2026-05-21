@@ -1,4 +1,5 @@
 import express from "express";
+import cors from "cors";
 import cookieParser from "cookie-parser";
 import bcrypt from "bcryptjs";
 import jwt from "jsonwebtoken";
@@ -26,6 +27,10 @@ const jerseyUpdateSchema = jerseyCreateSchema.partial();
 
 export const app = express();
 
+app.use(cors({
+  origin: "http://localhost:3000",
+  credentials: true
+}));
 app.use(express.json());
 app.use(cookieParser());
 
