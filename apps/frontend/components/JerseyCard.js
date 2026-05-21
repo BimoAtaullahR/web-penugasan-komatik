@@ -3,8 +3,23 @@
 import Image from 'next/image';
 import Link from 'next/link';
 import CategoryBadge from './CategoryBadge';
+import { useFavoritesStore } from '@komatik/favorites-store';
+import { useCallback } from 'react';
 
 export default function JerseyCard({ jersey }) {
+  const isFavorite = useFavoritesStore((state) => state.isFavorite(jersey.id));
+  const addFavorite = useFavoritesStore((state) => state.addFavorite);
+  const removeFavorite = useFavoritesStore((state) => state.removeFavorite);
+
+  const toggleFavorite = useCallback((e) => {
+    e.preventDefault();
+    if (isFavorite) {
+      removeFavorite(jersey.id);
+    } else {
+      addFavorite(jersey.id);
+    }
+  }, [isFavorite, addFavorite, removeFavorite, jersey.id]);
+
   return (
     <div 
       className="glass-panel"
@@ -42,6 +57,35 @@ export default function JerseyCard({ jersey }) {
             </span>
           </div>
         )}
+        <button
+          onClick={toggleFavorite}
+          style={{
+            position: 'absolute',
+            top: '1rem',
+            right: '1rem',
+            background: 'rgba(0, 0, 0, 0.5)',
+            border: 'none',
+            borderRadius: '50%',
+            width: '2.5rem',
+            height: '2.5rem',
+            display: 'flex',
+            alignItems: 'center',
+            justifyContent: 'center',
+            cursor: 'pointer',
+            fontSize: '1.25rem',
+            transition: 'all 0.2s'
+          }}
+          onMouseEnter={(e) => {
+            e.currentTarget.style.background = 'rgba(0, 0, 0, 0.8)';
+            e.currentTarget.style.transform = 'scale(1.1)';
+          }}
+          onMouseLeave={(e) => {
+            e.currentTarget.style.background = 'rgba(0, 0, 0, 0.5)';
+            e.currentTarget.style.transform = 'scale(1)';
+          }}
+        >
+          {isFavorite ? '❤️' : '🤍'}
+        </button>
       </div>
       
       <div className="flex flex-col flex-1" style={{ padding: '1.5rem' }}>

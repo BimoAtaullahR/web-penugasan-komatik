@@ -50,3 +50,20 @@ test("GET /api/v1/jerseys/:id returns a jersey detail", async () => {
   assert.equal(response.body.data.id, 1);
   assert.ok(response.body.data.clubName);
 });
+
+test("GET /api/v1/jerseys?search=name filters by club name", async () => {
+  const response = await request(app).get("/api/v1/jerseys?search=Barcelona");
+
+  assert.equal(response.status, 200);
+  assert.equal(response.body.success, true);
+  assert.ok(response.body.data.length > 0);
+  assert.ok(response.body.data.every((j) => j.clubName.toLowerCase().includes("barcelona")));
+});
+
+test("GET /api/v1/jerseys?league=... filters by league", async () => {
+  const response = await request(app).get("/api/v1/jerseys?league=Premier%20League");
+
+  assert.equal(response.status, 200);
+  assert.equal(response.body.success, true);
+  assert.ok(response.body.data.every((j) => j.league === "Premier League"));
+});
