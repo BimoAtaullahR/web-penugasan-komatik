@@ -1,8 +1,10 @@
 "use client";
 
 import { useEffect, useState } from "react";
+import { useRouter } from "next/navigation";
 import Link from "next/link";
 import { createJersey, deleteJersey, getJerseys, updateJersey } from "@komatik/api-client";
+import useAdminSession from "../../../hooks/useAdminSession";
 
 const emptyForm = {
   clubName: "",
@@ -38,6 +40,8 @@ const inputStyle = {
 };
 
 export default function AdminJerseysPage() {
+  const router = useRouter();
+  const { admin, isLoading, error } = useAdminSession();
   const [jerseys, setJerseys] = useState([]);
   const [status, setStatus] = useState({ type: "idle", message: "" });
   const [form, setForm] = useState(emptyForm);
@@ -53,8 +57,15 @@ export default function AdminJerseysPage() {
   };
 
   useEffect(() => {
-    loadJerseys();
-  }, []);
+    if (isLoading) return;
+    if (error?.status === 401) {
+      router.replace("/admin/login");
+      return;
+    }
+    if (admin) {
+      loadJerseys();
+    }
+  }, [admin, error, isLoading, router]);
 
   const handleChange = (key) => (event) => {
     const value = event.target.type === "checkbox" ? event.target.checked : event.target.value;
@@ -119,6 +130,16 @@ export default function AdminJerseysPage() {
   };
 
   const submitLabel = editId ? "Simpan Perubahan" : "Tambah Jersey";
+
+  if (isLoading) {
+    return (
+      <div className="container" style={{ padding: "4rem 1.5rem 8rem 1.5rem" }}>
+        <div className="glass-panel" style={{ padding: "2rem", borderRadius: "var(--radius-lg)" }}>
+          <p className="text-muted">Memeriksa sesi admin...</p>
+        </div>
+      </div>
+    );
+  }
 
   return (
     <div className="container" style={{ padding: "4rem 1.5rem 8rem 1.5rem" }}>

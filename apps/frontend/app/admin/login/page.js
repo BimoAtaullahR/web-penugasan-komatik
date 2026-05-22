@@ -3,8 +3,10 @@
 import { useState } from "react";
 import Link from "next/link";
 import { login } from "@komatik/api-client";
+import useAdminSession from "../../../hooks/useAdminSession";
 
 export default function AdminLoginPage() {
+  const { admin, isLoading } = useAdminSession();
   const [username, setUsername] = useState("");
   const [password, setPassword] = useState("");
   const [status, setStatus] = useState({ type: "idle", message: "" });
@@ -44,6 +46,17 @@ export default function AdminLoginPage() {
         <div className="glass-panel" style={{ padding: "2.5rem", borderRadius: "var(--radius-lg)" }}>
           <h1 className="heading-2" style={{ marginBottom: "0.5rem" }}>Admin Login</h1>
           <p className="text-muted" style={{ marginBottom: "2rem" }}>Masuk untuk mengelola Catalog Jersey.</p>
+
+          {admin && !isLoading && (
+            <div style={{ marginBottom: "1.5rem", padding: "0.75rem 1rem", borderRadius: "var(--radius-sm)", border: "1px solid var(--border)", background: "var(--surface)" }}>
+              <p className="text-muted" style={{ marginBottom: "0.5rem" }}>
+                Anda sudah login sebagai <strong style={{ color: "var(--text-main)" }}>{admin.username}</strong>.
+              </p>
+              <Link href="/admin/jerseys" style={{ color: "var(--primary)", fontWeight: 600 }}>
+                Lanjut ke Kelola Jersey
+              </Link>
+            </div>
+          )}
 
           <form onSubmit={handleSubmit} className="flex flex-col gap-4">
             <label className="text-muted" style={{ fontSize: "0.9rem" }}>
