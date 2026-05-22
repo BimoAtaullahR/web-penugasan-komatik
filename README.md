@@ -1,40 +1,59 @@
-This repo is a monorepo with a Next.js frontend and a backend scaffold.
+This repo is a monorepo with a Next.js frontend and an Express + Prisma backend.
 
-## Getting Started
+## Prerequisites
 
-Install dependencies at the repo root:
+- Node.js 18+
+- Docker (for local Postgres)
+
+## Setup
+
+1) Install dependencies:
 
 ```bash
 npm install
 ```
 
-Run the frontend dev server:
+2) Create environment variables:
+
+```bash
+cp .env.example .env
+```
+
+3) Start the database:
+
+```bash
+docker compose up -d
+```
+
+4) Run Prisma migrations (push) and seed:
+
+```bash
+npx prisma db push --schema apps/backend/prisma/schema.prisma
+npx prisma db seed --schema apps/backend/prisma/schema.prisma
+```
+
+## Run the apps
+
+Frontend:
 
 ```bash
 npm run dev:frontend
 ```
 
-Run the backend dev server:
+Backend:
 
 ```bash
 npm run dev:backend
 ```
 
-Open [http://localhost:3000](http://localhost:3000) with your browser to see the result.
+Open [http://localhost:3000](http://localhost:3000).
 
-You can start editing the page by modifying `apps/frontend/app/page.js`. The page auto-updates as you edit the file.
+## Admin demo credentials
 
-## Learn More
+- Username: `admin`
+- Password: `admin123`
 
-To learn more about Next.js, take a look at the following resources:
+## Auth notes
 
-- [Next.js Documentation](https://nextjs.org/docs) - learn about Next.js features and API.
-- [Learn Next.js](https://nextjs.org/learn) - an interactive Next.js tutorial.
-
-You can check out [the Next.js GitHub repository](https://github.com/vercel/next.js) - your feedback and contributions are welcome!
-
-## Deploy on Vercel
-
-The easiest way to deploy your Next.js app is to use the [Vercel Platform](https://vercel.com/new?utm_medium=default-template&filter=next.js&utm_source=create-next-app&utm_campaign=create-next-app-readme) from the creators of Next.js.
-
-Check out our [Next.js deployment documentation](https://nextjs.org/docs/app/building-your-application/deploying) for more details.
+- API uses HTTP-only cookies for Admin session.
+- Authorization header also supported: `Authorization: Bearer <token>`.
