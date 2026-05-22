@@ -1,19 +1,40 @@
 import HeroSection from "../components/HeroSection";
 import LeagueShowcase from "../components/LeagueShowcase";
 import JerseyCard from "../components/JerseyCard";
-import { jerseys, getAllLeagues } from "../data/jerseys";
 import Link from 'next/link';
 
+const resolveApiUrl = () => {
+  if (process.env.NEXT_PUBLIC_API_URL) {
+    return process.env.NEXT_PUBLIC_API_URL;
+  }
+  return "http://localhost:4000";
+};
+
+const fetchCatalog = async () => {
+  const response = await fetch(
+    `${resolveApiUrl()}/api/v1/jerseys?limit=200&offset=0`,
+    { cache: "no-store" }
+  );
+
+  if (!response.ok) {
+    return { data: [], meta: { total: 0 } };
+  }
+
+  return response.json();
+};
+
 // Component ini berjalan di SERVER (SSR). Tidak ada "use client".
-// Data diambil dan di-render langsung menjadi HTML sebelum dikirim ke browser.
-export default function Home() {
-  const leagues = getAllLeagues();
+// Data diambil dari API dan di-render langsung menjadi HTML sebelum dikirim ke browser.
+export default async function Home() {
+  const { data: jerseys, meta } = await fetchCatalog();
+  const leagues = [...new Set(jerseys.map(j => j.league))];
   
   // Ambil beberapa jersey unggulan (yang isNew === true)
   const featuredJerseys = jerseys.filter(j => j.isNew).slice(0, 4);
   
   // Statistik ringkas
   const totalClubs = new Set(jerseys.map(j => j.clubName)).size;
+  const totalJerseys = meta?.total ?? jerseys.length;
   
   return (
     <>
@@ -23,7 +44,7 @@ export default function Home() {
       <section style={{ backgroundColor: 'var(--surface)', borderBottom: '1px solid var(--border)', padding: '2rem 0' }}>
         <div className="container flex justify-center gap-8" style={{ flexWrap: 'wrap' }}>
           <div className="text-center">
-            <div style={{ fontSize: '2rem', fontWeight: 800, color: 'var(--primary)' }}>{jerseys.length}+</div>
+            <div style={{ fontSize: '2rem', fontWeight: 800, color: 'var(--primary)' }}>{totalJerseys}+</div>
             <div className="text-muted" style={{ fontSize: '0.875rem', textTransform: 'uppercase', letterSpacing: '0.05em' }}>Koleksi Jersey</div>
           </div>
           <div className="text-center">

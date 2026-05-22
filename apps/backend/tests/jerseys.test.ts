@@ -42,6 +42,15 @@ test("GET /api/v1/jerseys returns seeded data with pagination meta", async () =>
   assert.equal(response.body.data.length, 5);
 });
 
+test("GET /api/v1/jerseys rejects invalid pagination params", async () => {
+  const response = await request(app).get("/api/v1/jerseys?limit=oops&offset=-1");
+
+  assert.equal(response.status, 400);
+  assert.equal(response.body.success, false);
+  assert.equal(response.body.message, "Validation failed");
+  assert.ok(Array.isArray(response.body.errors));
+});
+
 test("GET /api/v1/jerseys/:id returns a jersey detail", async () => {
   const response = await request(app).get("/api/v1/jerseys/1");
 

@@ -1,10 +1,13 @@
 import express from "express";
-import cors from "cors";
 import cookieParser from "cookie-parser";
 import bcrypt from "bcryptjs";
 import jwt from "jsonwebtoken";
 import { z } from "zod";
 import { prisma } from "./prisma";
+import jerseyRoutes from "./routes/jerseys";
+import { errorHandler } from "./middleware/error-handler";
+import { authLimiter, globalLimiter } from "./middleware/rate-limiters";
+import { securityMiddleware } from "./middleware/security";
 
 const jerseyCreateSchema = z.object({
   clubName: z.string().min(1),
@@ -27,14 +30,15 @@ const jerseyUpdateSchema = jerseyCreateSchema.partial();
 
 export const app = express();
 
-app.use(cors({
-  origin: "http://localhost:3000",
-  credentials: true
-}));
+app.use(securityMiddleware.helmet);
+app.use(securityMiddleware.cors);
+app.use(globalLimiter);
 app.use(express.json());
 app.use(cookieParser());
 
 const JWT_SECRET = process.env.JWT_SECRET || "change-me-in-production";
+
+app.use("/api/v1/auth", authLimiter);
 
 app.post("/api/v1/auth/login", async (req, res, next) => {
   try {
@@ -74,14 +78,14 @@ app.post("/api/v1/auth/login", async (req, res, next) => {
 
 // --- Auth middleware ---
 const requireAdmin: express.RequestHandler = (req, res, next) => {
-  const token = (req as any).cookies?.token;
+  const token = req.cookies?.token;
   if (!token) {
     res.status(401).json({ success: false, message: "Authentication required" });
     return;
   }
   try {
     const payload = jwt.verify(token, JWT_SECRET) as { id: number; username: string };
-    (req as any).admin = payload;
+    req.admin = payload;
     next();
   } catch {
     res.status(401).json({ success: false, message: "Invalid or expired token" });
@@ -89,7 +93,7 @@ const requireAdmin: express.RequestHandler = (req, res, next) => {
 };
 
 app.get("/api/v1/auth/me", requireAdmin, (req, res) => {
-  res.json({ success: true, data: (req as any).admin });
+  res.json({ success: true, data: req.admin });
 });
 
 app.post("/api/v1/auth/logout", (_req, res) => {
@@ -97,49 +101,7 @@ app.post("/api/v1/auth/logout", (_req, res) => {
   res.json({ success: true, message: "Logged out" });
 });
 
-app.get("/api/v1/jerseys", async (req, res, next) => {
-  try {
-    const limit = Math.max(1, Number(req.query.limit) || 10);
-    const offset = Math.max(0, Number(req.query.offset) || 0);
-    const search = req.query.search ? String(req.query.search).toLowerCase() : null;
-    const league = req.query.league ? String(req.query.league) : null;
-    const kitType = req.query.kitType ? String(req.query.kitType) : null;
-    const issueType = req.query.issueType ? String(req.query.issueType) : null;
-    const brand = req.query.brand ? String(req.query.brand) : null;
-
-    const whereClause: any = {};
-
-    if (search) {
-      whereClause.OR = [
-        { clubName: { contains: search, mode: "insensitive" } },
-        { country: { contains: search, mode: "insensitive" } }
-      ];
-    }
-
-    if (league) whereClause.league = league;
-    if (kitType) whereClause.kitType = kitType;
-    if (issueType) whereClause.issueType = issueType;
-    if (brand) whereClause.brand = brand;
-
-    const [total, data] = await Promise.all([
-      prisma.jersey.count({ where: whereClause }),
-      prisma.jersey.findMany({
-        where: whereClause,
-        take: limit,
-        skip: offset,
-        orderBy: { id: "asc" }
-      })
-    ]);
-
-    res.json({
-      success: true,
-      data,
-      meta: { total, limit, offset }
-    });
-  } catch (error) {
-    next(error);
-  }
-});
+app.use("/api/v1/jerseys", jerseyRoutes);
 
 app.get("/api/v1/jerseys/:id", async (req, res, next) => {
   try {
@@ -224,7 +186,4 @@ app.delete("/api/v1/jerseys/:id", requireAdmin, async (req, res, next) => {
   }
 });
 
-app.use((error: unknown, _req: express.Request, res: express.Response, _next: express.NextFunction) => {
-  console.error(error);
-  res.status(500).json({ success: false, message: "Internal server error" });
-});
+app.use(errorHandler);
