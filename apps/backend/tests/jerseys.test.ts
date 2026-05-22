@@ -60,6 +60,23 @@ test("GET /api/v1/jerseys/:id returns a jersey detail", async () => {
   assert.ok(response.body.data.clubName);
 });
 
+test("GET /api/v1/jerseys/:id rejects invalid jersey id", async () => {
+  const response = await request(app).get("/api/v1/jerseys/invalid");
+
+  assert.equal(response.status, 400);
+  assert.equal(response.body.success, false);
+  assert.equal(response.body.message, "Validation failed");
+  assert.ok(Array.isArray(response.body.errors));
+});
+
+test("GET /api/v1/jerseys/:id returns 404 when jersey missing", async () => {
+  const response = await request(app).get("/api/v1/jerseys/999999");
+
+  assert.equal(response.status, 404);
+  assert.equal(response.body.success, false);
+  assert.equal(response.body.message, "Jersey not found");
+});
+
 test("GET /api/v1/jerseys?search=name filters by club name", async () => {
   const response = await request(app).get("/api/v1/jerseys?search=Barcelona");
 

@@ -36,4 +36,7 @@ export const jerseyRepository = {
 
     return { total, data };
   },
+  async findById(id: number) {
+    return prisma.jersey.findUnique({ where: { id } });
+  },
 };

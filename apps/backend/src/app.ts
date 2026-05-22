@@ -103,26 +103,6 @@ app.post("/api/v1/auth/logout", (_req, res) => {
 
 app.use("/api/v1/jerseys", jerseyRoutes);
 
-app.get("/api/v1/jerseys/:id", async (req, res, next) => {
-  try {
-    const id = Number(req.params.id);
-    if (Number.isNaN(id)) {
-      res.status(400).json({ success: false, message: "Invalid Jersey id" });
-      return;
-    }
-
-    const jersey = await prisma.jersey.findUnique({ where: { id } });
-    if (!jersey) {
-      res.status(404).json({ success: false, message: "Jersey not found" });
-      return;
-    }
-
-    res.json({ success: true, data: jersey });
-  } catch (error) {
-    next(error);
-  }
-});
-
 // --- Protected Admin routes ---
 app.post("/api/v1/jerseys", requireAdmin, async (req, res, next) => {
   try {

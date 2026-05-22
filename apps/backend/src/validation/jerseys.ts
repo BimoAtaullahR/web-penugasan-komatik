@@ -39,6 +39,11 @@ export const jerseyListQuerySchema = z.object({
 
 export type JerseyListQuery = z.infer<typeof jerseyListQuerySchema>;
 
+const jerseyIdSchema = z.preprocess(
+  coerceNumber,
+  z.number().int().positive()
+);
+
 export const parseJerseyListQuery = (input: unknown): JerseyListQuery => {
   const parsed = jerseyListQuerySchema.safeParse(input);
   if (!parsed.success) {
@@ -50,5 +55,20 @@ export const parseJerseyListQuery = (input: unknown): JerseyListQuery => {
       }))
     );
   }
+  return parsed.data;
+};
+
+export const parseJerseyId = (input: unknown): number => {
+  const parsed = jerseyIdSchema.safeParse(input);
+  if (!parsed.success) {
+    throw new ValidationError(
+      "Validation failed",
+      parsed.error.issues.map((issue) => ({
+        path: issue.path.join("."),
+        message: issue.message,
+      }))
+    );
+  }
+
   return parsed.data;
 };
