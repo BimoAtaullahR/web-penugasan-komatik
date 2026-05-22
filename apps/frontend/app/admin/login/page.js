@@ -105,6 +105,13 @@ export default function AdminLoginPage() {
           {status.type !== "idle" && (
             <div style={{ marginTop: "1.5rem", color: status.type === "error" ? "#f87171" : "var(--text-main)" }}>
               {status.message}
+              {status.type === "success" && (
+                <div style={{ marginTop: "0.75rem" }}>
+                  <Link href="/admin/jerseys" style={{ color: "var(--primary)", fontWeight: 600 }}>
+                    Lanjut ke Kelola Jersey
+                  </Link>
+                </div>
+              )}
             </div>
           )}
         </div>

@@ -39,4 +39,13 @@ export const jerseyRepository = {
   async findById(id: number) {
     return prisma.jersey.findUnique({ where: { id } });
   },
+  async create(data: any) {
+    return prisma.jersey.create({ data });
+  },
+  async update(id: number, data: any) {
+    return prisma.jersey.update({ where: { id }, data });
+  },
+  async remove(id: number) {
+    return prisma.jersey.delete({ where: { id } });
+  },
 };

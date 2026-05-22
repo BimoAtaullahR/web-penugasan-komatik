@@ -1,5 +1,9 @@
 import { jerseyRepository } from "../repositories/jerseys";
-import type { JerseyListQuery } from "../validation/jerseys";
+import type {
+  JerseyCreatePayload,
+  JerseyListQuery,
+  JerseyUpdatePayload,
+} from "../validation/jerseys";
 import { AppError } from "../middleware/errors";
 
 export const listJerseys = async (query: JerseyListQuery) => {
@@ -23,4 +27,26 @@ export const getJerseyById = async (id: number) => {
   }
 
   return jersey;
+};
+
+export const createJersey = async (payload: JerseyCreatePayload) => {
+  return jerseyRepository.create(payload);
+};
+
+export const updateJersey = async (id: number, payload: JerseyUpdatePayload) => {
+  const existing = await jerseyRepository.findById(id);
+  if (!existing) {
+    throw new AppError("Jersey not found", 404);
+  }
+
+  return jerseyRepository.update(id, payload);
+};
+
+export const deleteJersey = async (id: number) => {
+  const existing = await jerseyRepository.findById(id);
+  if (!existing) {
+    throw new AppError("Jersey not found", 404);
+  }
+
+  await jerseyRepository.remove(id);
 };

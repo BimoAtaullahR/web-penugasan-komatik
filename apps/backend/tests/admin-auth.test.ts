@@ -194,6 +194,44 @@ test("PUT /api/v1/jerseys/:id with auth updates a Jersey", async () => {
   await prisma.jersey.delete({ where: { id } });
 });
 
+test("PUT /api/v1/jerseys/:id with invalid payload returns 400", async () => {
+  const cookie = await loginAdmin();
+
+  const createRes = await request(app)
+    .post("/api/v1/jerseys")
+    .set("Cookie", cookie)
+    .send({
+      clubName: "Validation FC",
+      league: "Test League",
+      country: "Testland",
+      season: "2025/2026",
+      kitType: "Home",
+      issueType: "Fan Issue",
+      brand: "TestBrand",
+      gender: "Men",
+      price: 500000,
+      description: "Will be updated",
+      image: "/images/test.png",
+      rating: 4.0,
+      isNew: true,
+      stock: 10,
+    });
+
+  const id = createRes.body.data.id;
+
+  const response = await request(app)
+    .put(`/api/v1/jerseys/${id}`)
+    .set("Cookie", cookie)
+    .send({ clubName: "" });
+
+  assert.equal(response.status, 400);
+  assert.equal(response.body.success, false);
+  assert.equal(response.body.message, "Validation failed");
+  assert.ok(Array.isArray(response.body.errors));
+
+  await prisma.jersey.delete({ where: { id } });
+});
+
 test("PUT /api/v1/jerseys/:id returns 404 for non-existent Jersey", async () => {
   const cookie = await loginAdmin();
 
