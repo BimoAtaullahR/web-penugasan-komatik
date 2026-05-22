@@ -1,13 +1,13 @@
 import express from "express";
 import cookieParser from "cookie-parser";
-import bcrypt from "bcryptjs";
-import jwt from "jsonwebtoken";
 import { z } from "zod";
 import { prisma } from "./prisma";
 import jerseyRoutes from "./routes/jerseys";
+import authRoutes from "./routes/auth";
 import { errorHandler } from "./middleware/error-handler";
 import { authLimiter, globalLimiter } from "./middleware/rate-limiters";
 import { securityMiddleware } from "./middleware/security";
+import { requireAdmin } from "./middleware/auth";
 
 const jerseyCreateSchema = z.object({
   clubName: z.string().min(1),
@@ -36,70 +36,7 @@ app.use(globalLimiter);
 app.use(express.json());
 app.use(cookieParser());
 
-const JWT_SECRET = process.env.JWT_SECRET || "change-me-in-production";
-
-app.use("/api/v1/auth", authLimiter);
-
-app.post("/api/v1/auth/login", async (req, res, next) => {
-  try {
-    const { username, password } = req.body;
-    if (!username || !password) {
-      res.status(400).json({ success: false, message: "Username and password are required" });
-      return;
-    }
-
-    const admin = await prisma.admin.findUnique({ where: { username } });
-    if (!admin) {
-      res.status(401).json({ success: false, message: "Invalid credentials" });
-      return;
-    }
-
-    const valid = await bcrypt.compare(password, admin.password);
-    if (!valid) {
-      res.status(401).json({ success: false, message: "Invalid credentials" });
-      return;
-    }
-
-    const token = jwt.sign({ id: admin.id, username: admin.username }, JWT_SECRET, {
-      expiresIn: "24h",
-    });
-
-    res.cookie("token", token, {
-      httpOnly: true,
-      sameSite: "lax",
-      maxAge: 24 * 60 * 60 * 1000,
-    });
-
-    res.json({ success: true, data: { id: admin.id, username: admin.username } });
-  } catch (error) {
-    next(error);
-  }
-});
-
-// --- Auth middleware ---
-const requireAdmin: express.RequestHandler = (req, res, next) => {
-  const token = req.cookies?.token;
-  if (!token) {
-    res.status(401).json({ success: false, message: "Authentication required" });
-    return;
-  }
-  try {
-    const payload = jwt.verify(token, JWT_SECRET) as { id: number; username: string };
-    req.admin = payload;
-    next();
-  } catch {
-    res.status(401).json({ success: false, message: "Invalid or expired token" });
-  }
-};
-
-app.get("/api/v1/auth/me", requireAdmin, (req, res) => {
-  res.json({ success: true, data: req.admin });
-});
-
-app.post("/api/v1/auth/logout", (_req, res) => {
-  res.clearCookie("token");
-  res.json({ success: true, message: "Logged out" });
-});
+app.use("/api/v1/auth", authLimiter, authRoutes);
 
 app.use("/api/v1/jerseys", jerseyRoutes);
 

@@ -55,6 +55,17 @@ test("POST /api/v1/auth/login with valid credentials returns 200 and sets cookie
   assert.ok(tokenCookie.includes("HttpOnly"), "Cookie should be HttpOnly");
 });
 
+test("POST /api/v1/auth/login with missing fields returns 400", async () => {
+  const response = await request(app)
+    .post("/api/v1/auth/login")
+    .send({ username: "" });
+
+  assert.equal(response.status, 400);
+  assert.equal(response.body.success, false);
+  assert.equal(response.body.message, "Validation failed");
+  assert.ok(Array.isArray(response.body.errors));
+});
+
 test("POST /api/v1/auth/login with wrong password returns 401", async () => {
   const response = await request(app)
     .post("/api/v1/auth/login")
@@ -72,6 +83,16 @@ test("POST /api/v1/auth/login with non-existent user returns 401", async () => {
 
   assert.equal(response.status, 401);
   assert.equal(response.body.success, false);
+});
+
+test("GET /api/v1/auth/me with auth returns admin data", async () => {
+  const response = await request(app)
+    .get("/api/v1/auth/me")
+    .set("Cookie", await loginAdmin());
+
+  assert.equal(response.status, 200);
+  assert.equal(response.body.success, true);
+  assert.equal(response.body.data.username, "admin");
 });
 
 test("POST /api/v1/jerseys without auth returns 401", async () => {
