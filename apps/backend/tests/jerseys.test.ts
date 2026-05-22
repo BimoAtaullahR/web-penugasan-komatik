@@ -1,6 +1,7 @@
 import test, { after, before } from "node:test";
 import assert from "node:assert/strict";
 import { execSync } from "node:child_process";
+import path from "node:path";
 import request from "supertest";
 
 process.env.DATABASE_URL =
@@ -11,7 +12,7 @@ let app;
 let prisma;
 let seedJerseys;
 
-const schemaPath = "apps/backend/prisma/schema.prisma";
+const schemaPath = path.resolve(__dirname, "../prisma/schema.prisma");
 
 before(async () => {
   execSync(`npx prisma generate --schema ${schemaPath}`, { stdio: "inherit" });

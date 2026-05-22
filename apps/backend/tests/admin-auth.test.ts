@@ -1,6 +1,7 @@
 import test, { after, before } from "node:test";
 import assert from "node:assert/strict";
 import { execSync } from "node:child_process";
+import path from "node:path";
 import request from "supertest";
 import bcrypt from "bcryptjs";
 
@@ -13,7 +14,7 @@ process.env.JWT_SECRET = "test-secret-key";
 let app: any;
 let prisma: any;
 
-const schemaPath = "apps/backend/prisma/schema.prisma";
+const schemaPath = path.resolve(__dirname, "../prisma/schema.prisma");
 
 before(async () => {
   execSync(`npx prisma generate --schema ${schemaPath}`, { stdio: "inherit" });
