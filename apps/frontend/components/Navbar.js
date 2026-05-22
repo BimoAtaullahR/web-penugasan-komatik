@@ -29,6 +29,14 @@ export default function Navbar() {
                 About
               </Link>
             </li>
+            <li>
+              <Link href="/admin/login" className="hover:text-main" style={{ color: 'var(--text-muted)', display: 'flex', alignItems: 'center', gap: '0.5rem' }}>
+                <span style={{ fontSize: '0.75rem', fontWeight: 700, padding: '0.2rem 0.5rem', borderRadius: '999px', border: '1px solid var(--border)', color: 'var(--text-main)' }}>
+                  Admin
+                </span>
+                Login
+              </Link>
+            </li>
           </ul>
         </nav>
       </div>
