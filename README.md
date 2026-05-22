@@ -28,8 +28,8 @@ docker compose up -d
 4) Run Prisma migrations (push) and seed:
 
 ```bash
-npx prisma db push --schema apps/backend/prisma/schema.prisma
-npx prisma db seed --schema apps/backend/prisma/schema.prisma
+npm exec --workspace=backend -- npx prisma db push
+npm exec --workspace=backend -- npx prisma db seed
 ```
 
 ## Run the apps
